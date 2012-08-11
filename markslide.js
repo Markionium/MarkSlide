@@ -14,123 +14,171 @@
  ***************************************************************************/
 (function($){
     
-    var _slides = null;
+    var _sliders = new Object;
     
-    //active = 1. paused = 0
-    var _state = 1;
-    
-    var _slidewidth = 0;
-    var _maxwidth = 0;
-    var _slidecount = 0;
-    
-    var _options = new Object;
-    
-    /**
-     * 
-     */
-    $.fn.markslide = function(option){
+    $.fn.markslide = function(options){
         
-        $(this).hover(this.pause, this.resume);
-       
-        this.processoptions(option);
+        slider= new MarkSlide(this, options);
         
-        console.log( _options );
+        _sliders[$(this).attr("id")] = slider;
+        
+        //create hover events for pause on hover
+        $(this).hover(slider.pause, slider.resume);
         
         //set css for parent
         $(this).css("overflow", "hidden");
-        
+    }
+    
+    
+    function MarkSlide(slider, options){
+            
+        //process options
+        this.processoptions(options);
+
         //get slides
-        _slides = $(this).children(".slide");
+        this._slides = $(slider).children(".slide");
         
         //getslidewidth
-        _slidewidth = $(this).children().first().innerWidth();
+        this._slidewidth = $(slider).children().first().innerWidth();
         
         //get slide count
-        _slidecount = _slides.length;
+        this._slidecount = this._slides.length;
         
-        
-        _maxwidth = (_slidecount - 2 )* _slidewidth
+        //set maxwidth of slider TODO this seems shitty but i don't know why yet
+        this._maxwidth = (this._slidecount - 2 ) * this._slidewidth
         
         
         //set css for slides
-        _slides.css("float", "left");
-        _slides.css("position", "absolute");
+        this._slides.css("float", "left");
+        this._slides.css("position", "absolute");
         
-        _slides.wrapAll('<div class="slideholder" />');
-        $(this).children().first().css("width", _maxwidth).css('position', "relative");
+        //wrap child elements in a wrapper
+        this._slides.wrapAll('<div class="slideholder" />');
         
-        _slides.each(Setup)
+        //set wrapper css
+        $(slider).children().first().css("width", this._maxwidth).css('position', "relative");
         
-        _slides.each(Loop);
-            
-    }
+        //do initialization for the slides
+        this._slides.each(function(index, item){
+            this.setup(index, item);
+        }.bind(this));
         
-    function Setup(index, item){
-            
-        var _left = index * parseInt($(this).innerWidth());
-            
-        $(this).css("left", "-"+_left+"px");
-            
-    }
+        //animate the slides
+        this._slides.each(function(index, item){
+            this.loop(index, item);
+        }.bind(this));
         
-    function Loop(index, item){      
-        
-        if(parseInt($(this).css("left")) > _maxwidth)
-            $(this).css("left", "-"+_slidewidth+"px");
-        
-        //if it's a resume from hover then don't do the delay
-        if(_state == 0){
-            $(this).clearQueue();
-            $(this).stop();
-        }else{
-            $(this).delay(0).animate({
-                left: "+="+_slidewidth+"px"
-            }, _options.speed, Loop).delay(_options.pause);
-        }
-    }
-    
-    /*
+        /*
      * Pause the slider
      */
-    $.fn.pause = function(){
+        this.pause = function(){
         
-        console.log('pause');
+            this._state = 0;
+            
+            if(this._options.instaPause == true){
+                
+                var toGo = 0;
         
-        //set state to pause
-        _state = 0;
-
-    }
-    /*
+                this._slides.clearQueue();
+                this._slides.each(function(index, item){
+                    
+                    if(parseFloat($(item).position().left) > this._maxwidth){
+                    
+                        console.log ( "item" + this._slides[index] );
+                    
+                        toGo = this._slidewidth - (parseFloat($(item).position().left) - this._maxwidth);
+                        this._remaining = this._slidewidth - toGo;
+                        toGo = this._slidewidth + toGo;
+                    
+                        $(item).css("left", "-"+toGo+"px")
+                    
+                        console.log ( "index" + index );
+                        console.log ( "left" + $(item).position().left );
+                        console.log ("toGo" + toGo );
+                    }
+                    $(item).clearQueue();
+                    $(item).stop();
+                
+                }.bind(this)); 
+            }
+        }.bind(this)
+        
+        /*
      * Resume slider after pause
      */
-    $.fn.resume = function(){
-        
-        console.log('start');
-        
-        //set state to active
-        _state = 1;
-        
-        //restart animation
-        _slides.each(Loop);
+        this.resume = function(){
+            this._state = 1;
             
+            this._slides.each(function(index, item)
+            {
+                this.loop(index, item);
+            }.bind(this));
+            
+        }.bind(this)
     }
     
-    /* Function to process the options given to the slider
+    MarkSlide.prototype = { 
+         
+        //variables
+        _options: new Object(),
+        _slides: null,
+    
+        //active = 1. paused = 0
+        _state: 1,
+    
+        _slidewidth: 0,
+        _maxwidth: 0,
+        _slidecount: 0,
+        
+        _remaining: 0,         
+         
+        //methods
+        /* Function to process the options given to the slider
      *
      * @param Object|undefined option object with options or undefined if no options were given
      */
-    $.fn.processoptions = function(option){
+        processoptions: function(options){
+            
+            this._options.instaPause = false;
+            this._options.speed = 1500;
+            this._options.pause = 5000;
+            
+            if(options !== undefined){
+                this._options = options;
+                this._options.instaPause = true;
+            }
         
-        console.log( option );
-        
-        if(option !== undefined){
-            _options = option;
-        }    
-        else
-        {
-            _options.pause = 2000;
-            _options.speed = 2500;
+        },
+        setup: function(index, item){
+            
+            var _left = index * parseInt($(item).innerWidth());
+            
+            $(item).css("left", "-"+_left+"px");
+            
+        },
+        /*
+     * Loop that does the animating and relocation of the items
+     * 
+     * @param int index Index of the item in the list
+     * @param string item html representation of the item
+     */
+        loop:  function (index, item){
+            
+            if(parseFloat($(item).css("left")) > this._maxwidth)
+                $(item).css("left", "-"+this._slidewidth+"px");
+            
+            if(this._state == 0){
+                //$(item).clearQueue();
+                //$(item).stop();
+            }else{
+                $(item).delay(0).animate({
+                    left: "+="+this._slidewidth+"px"
+                }, this._options.speed, function(){
+                    this.loop(index, item);
+                }.bind(this)).delay(this._options.pause);
+            }
         }
+   
     }
-    
-})(jQuery)
+
+})(jQuery);
