@@ -31,8 +31,8 @@
     $.fn.markslide = function(option){
         
         $(this).hover(this.pause, this.resume);
-        
-       this.processoptions(option);
+       
+        this.processoptions(option);
         
         console.log( _options );
         
@@ -89,6 +89,9 @@
         }
     }
     
+    /*
+     * Pause the slider
+     */
     $.fn.pause = function(){
         
         console.log('pause');
@@ -97,7 +100,9 @@
         _state = 0;
 
     }
-    
+    /*
+     * Resume slider after pause
+     */
     $.fn.resume = function(){
         
         console.log('start');
@@ -110,6 +115,10 @@
             
     }
     
+    /* Function to process the options given to the slider
+     *
+     * @param Object|undefined option object with options or undefined if no options were given
+     */
     $.fn.processoptions = function(option){
         
         console.log( option );
