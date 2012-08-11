@@ -7,14 +7,13 @@
         <style>
             
             #markh, #markv{
-                width:600px;
                 height: 200px;
                 position: relative;
                 left: 200px;
             }
             
             .slide{
-                width: 300px;
+                width: 200px;
                 height: 200px;
             }
             
@@ -67,13 +66,16 @@
         <script src="jquery-1.7.2.min.js"></script>
         <script src="markslide.js"></script>
         <script>
-            $("#markh").markslide();
+            $("#markh").markslide({
+                //{speed: 2000}
+                display: 4
+            });
             
             $("#markv").markslide(
-                {
-                    speed: 500,
-                    pause: 500,
-                    instaPause: true
+                {   display: 3,
+                    //speed: 2500,
+                    wait: 500,
+                    vertical: true
                 }
             );
         </script>
