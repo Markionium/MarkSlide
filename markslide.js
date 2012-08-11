@@ -31,18 +31,25 @@
     
     
     function MarkSlide(slider, options){
-            
+        
         //process options
         this.instaPause = false;
         this.speed = 1500;
         this.wait = 5000;
         this.vertical = false;
         this.display = 1;
+        this.direction = "left";
+        this.measurement = "width";
             
         for (var key in options) {
             if (options.hasOwnProperty(key)) {                
                 this[key] = options[key];
             }
+        }
+        
+        if(this.vertical == true){
+            this.direction = "top";
+            this.measurement = "height";
         }
         
         //set css for parent
@@ -51,32 +58,34 @@
         //get slides
         this._slides = $(slider).children(".slide");
         
-        //getslidewidth
-        this._slidewidth = $(slider).children().first().innerWidth();
+        if(this.vertical == true){
+            this._slidesize = $(slider).children().first().innerHeight();
+            //set slider width to fix mouse events from the left
+            $(slider).css("width", $(slider).children().first().innerWidth()+"px");
+        }else{      
+            //getslidewidth
+            this._slidesize = $(slider).children().first().innerWidth();
+        }
         
         //get slide count
         this._slidecount = this._slides.length;
         
-        //set maxwidth of slider TODO this seems shitty but i don't know why yet
-        this._maxwidth = (this._slidecount - 2) * this._slidewidth;
+        //max is maximum width or height depending on direction
+        this._max = (this._slidecount - 2) * this._slidesize;
         
         //maxwidth of the sliderwrapper to still properly display
         if(this.display > (this._slidecount - 1)){
-            $(slider).css("width", (this._maxwidth + this._slidewidth)+"px");
+            $(slider).css(this.measurement, (this._max + this._slidesize)+"px");
         }
         else{
-            $(slider).css("width", this.display * this._slidewidth);
+            $(slider).css(this.measurement, this.display * this._slidesize);
         }
-        
-        //set css for slides
-        this._slides.css("float", "left");
-        this._slides.css("position", "absolute");
         
         //wrap child elements in a wrapper
         this._slides.wrapAll('<div class="slideholder" />');
         
         //set wrapper css
-        $(slider).children().first().css("width", this._maxwidth).css('position', "relative");
+        $(slider).children().first().css(this.measurement, this._max).css('position', "relative");
         
         //do initialization for the slides
         this._slides.each(function(index, item){
@@ -102,13 +111,13 @@
                 this._slides.clearQueue();
                 this._slides.each(function(index, item){
                     
-                    if(parseFloat($(item).position().left) > this._maxwidth){
+                    if(parseFloat($(item).position().left) > this._max){
                     
                         //console.log ( "item" + this._slides[index] );
                     
-                        toGo = this._slidewidth - (parseFloat($(item).position().left) - this._maxwidth);
-                        this._remaining = this._slidewidth - toGo;
-                        toGo = this._slidewidth + toGo;
+                        toGo = this._slidesize - (parseFloat($(item).position().left) - this._max);
+                        this._remaining = this._slidesize - toGo;
+                        toGo = this._slidesize + toGo;
                     
                         $(item).css("left", "-"+toGo+"px")
                     /*
@@ -146,8 +155,8 @@
         //active = 1. paused = 0
         _state: 1,
     
-        _slidewidth: 0,
-        _maxwidth: 0,
+        _slidesize: 0,
+        _max: 0,
         _slidecount: 0,
         
         _remaining: 0,         
@@ -160,11 +169,23 @@
         
         setup: function(index, item){
             
-            var width =  parseInt($(item).innerWidth());
-            var left = ((index * width) - width );
+            if(this.vertical == true){
+                
+                var height = parseInt($(item).innerHeight());
+                var top = (index * height) - height;
+                $(item).css(this.direction, top+"px");
+                console.log( top );
+            }
+            else{
+                $(item).css("float", "left");
+                var width =  parseInt($(item).innerWidth());
+                var left = ((index * width) - width );  
+                $(item).css(this.direction, (left)+"px");
+            }
             
-            $(item).css("left", (left)+"px");
-                  
+            //set css for slides
+            $(item).css("position", "absolute");
+            
         },
         
         /*
@@ -175,20 +196,30 @@
         */
         loop:  function (index, item){
             
-            // console.log (  this.speed );
-            
-            if(parseFloat($(item).css("left")) > this._maxwidth)
-                $(item).css("left", "-"+this._slidewidth+"px");
-            
             if(this._state == 0){
-            //$(item).clearQueue();
-            //$(item).stop();
+                $(item).clearQueue();
+                $(item).stop();
             }else{
-                $(item).delay(0).animate({
-                    left: "+="+this._slidewidth+"px"
-                }, this.speed, function(){
-                    this.loop(index, item);
-                }.bind(this)).delay(this.wait);
+                if(this.vertical == true){
+                
+                    if(parseFloat($(item).css(this.direction)) < 0)
+                        $(item).css(this.direction, (this._max + this._slidesize)+"px");
+                
+                    $(item).delay(0).animate({
+                        top: "-="+this._slidesize+"px"
+                    }, this.speed, function(){
+                        this.loop(index, item);
+                    }.bind(this)).delay(this.wait);
+                }else{
+                    if(parseFloat($(item).css(this.direction)) > this._max)
+                        $(item).css(this.direction, "-"+this._slidesize+"px");
+                
+                    $(item).delay(0).animate({
+                        left: "+="+this._slidesize+"px"
+                    }, this.speed, function(){
+                        this.loop(index, item);
+                    }.bind(this)).delay(this.wait);
+                }
             }
         }
    

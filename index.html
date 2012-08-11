@@ -7,14 +7,14 @@
         <style>
             
             #markh, #markv{
-                height: 200px;
+                height: 300px;
                 position: relative;
-                left: 200px;
+                left: 300px;
             }
             
             .slide{
-                width: 200px;
-                height: 200px;
+                width: 300px;
+                height: 300px;
             }
             
             .blue{
@@ -35,13 +35,13 @@
     <body>
         <div id="markh">
             <div class="slide red">
-                <a href="#">Square 1</a>
+                <a href="#"><img src="images/1.jpg" /></a>
             </div>
             <div class="slide green">
-                <a href="#">Square 2</a>
+                <a href="#"><img src="images/2.jpg" /></a>
             </div>
             <div class="slide blue">
-                <a href="#">Square 3</a>
+                <a href="#"><img src="images/3.jpg" /></a>
             </div>
         </div>
         
@@ -49,16 +49,19 @@
         
         <div id="markv">
             <div class="slide red">
-                <a href="#">Square 1</a>
+                <a href="#"><img src="images/1.jpg" /></a>
             </div>
             <div class="slide green">
-                <a href="#">Square 2</a>
+                <a href="#"><img src="images/4.jpg" /></a>
             </div>
             <div class="slide blue">
-                <a href="#">Square 3</a>
+                <a href="#"><img src="images/5.jpg" /></a>
             </div>
             <div class="slide orange">
-                <a href="#">Square 4</a>
+                <div><h1>Titel!</h1></div>
+                <div>
+                    Hier staat gewoon wat random text. En bedankt voor de bloemen
+                </div>
             </div>
         </div>
 
@@ -67,15 +70,17 @@
         <script src="markslide.js"></script>
         <script>
             $("#markh").markslide({
-                //{speed: 2000}
-                display: 4
+                speed: 1000,
+                wait: 5000,
+                display: 2
             });
             
             $("#markv").markslide(
-                {   display: 3,
+                {   display: 4,
                     //speed: 2500,
                     wait: 500,
                     vertical: true
+                    //instaPause: true
                 }
             );
         </script>
